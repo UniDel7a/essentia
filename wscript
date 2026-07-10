@@ -6,6 +6,7 @@ from __future__ import print_function
 import os
 import sys
 import platform
+import shutil
 
 
 def get_git_version():
@@ -31,9 +32,16 @@ if 'VIRTUAL_ENV' in os.environ:
     default_prefix = os.environ['VIRTUAL_ENV']
 
 
+def _is_mingw():
+    """Detect MinGW environment (MSYS2 or g++ in PATH)"""
+    if 'MSYSTEM' in os.environ:
+        return True
+    return shutil.which('g++') is not None
+
+
 def options(ctx):
     ctx.load('compiler_cxx compiler_c python')
-    if sys.platform == 'win32' and 'MSYSTEM' not in os.environ:
+    if sys.platform == 'win32' and not _is_mingw():
         ctx.load('msvc')
 
     ctx.recurse('src')
@@ -123,6 +131,8 @@ def configure(ctx):
     if sys.platform != 'win32':
         # msvc does not support -pipe
         ctx.env.CXXFLAGS += ['-pipe', '-Wall']
+    elif _is_mingw():
+        ctx.env.CXXFLAGS += ['-pipe', '-Wall']
     else:
         ctx.env.CXXFLAGS += ['-W2', '-EHsc']
 
@@ -131,12 +141,11 @@ def configure(ctx):
     # numerical differences between 32/64-bit builds
     # (see https://github.com/MTG/essentia/issues/179)
     # Allow SSE on MSYS2/MinGW (native Windows GCC), skip on MSVC
-    is_msys2_mingw = sys.platform == 'win32' and 'MSYSTEM' in os.environ
     if (not ctx.options.EMSCRIPTEN and 
         not ctx.options.CROSS_COMPILE_ANDROID and 
         not ctx.options.CROSS_COMPILE_IOS and
         not ctx.options.NO_MSSE and
-        (sys.platform != 'win32' or is_msys2_mingw) and
+        (sys.platform != 'win32' or _is_mingw()) and
         any(arch in platform.machine() for arch in ['i386', 'i686', 'x86', 'x64'])):
         ctx.env.CXXFLAGS += ['-msse', '-msse2', '-mfpmath=sse']
 
@@ -208,19 +217,19 @@ def configure(ctx):
         ctx.env.LINKFLAGS += ['-pthread']
 
     elif sys.platform == 'win32':
-        if 'MSYSTEM' in os.environ:
-            # MSYS2 + MinGW environment (native Windows build without WSL)
-            msystem = os.environ.get('MSYSTEM', '')
-            mingw_prefix = os.environ.get('MINGW_PREFIX', '/mingw64')
-            print (f"→ Building on Windows with MSYS2/MSYSTEM={msystem} / {mingw_prefix}")
+        if _is_mingw():
+            msystem = os.environ.get('MSYSTEM', 'MinGW')
+            mingw_prefix = os.environ.get('MINGW_PREFIX', '')
+            print (f"→ Building on Windows with MinGW (MSYSTEM={msystem})")
 
-            # Set PKG_CONFIG_PATH to MSYS2's pkgconfig directory
-            pkg_config_path = os.path.join(mingw_prefix, 'lib', 'pkgconfig')
-            if os.path.exists(pkg_config_path):
-                os.environ["PKG_CONFIG_PATH"] = pkg_config_path
-                print(f"→ PKG_CONFIG_PATH set to {pkg_config_path}")
+            # Set PKG_CONFIG_PATH for MSYS2 environments
+            if mingw_prefix:
+                pkg_config_path = os.path.join(mingw_prefix, 'lib', 'pkgconfig')
+                if os.path.exists(pkg_config_path):
+                    os.environ["PKG_CONFIG_PATH"] = pkg_config_path
+                    print(f"→ PKG_CONFIG_PATH set to {pkg_config_path}")
 
-            # Use MinGW GCC compiler from MSYS2
+            # Use MinGW GCC compiler
             ctx.env.CC = 'gcc'
             ctx.env.CXX = 'g++'
             ctx.env.AR = 'ar'
