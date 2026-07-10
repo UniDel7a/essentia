@@ -230,11 +230,18 @@ def configure(ctx):
                     print(f"→ PKG_CONFIG_PATH set to {pkg_config_path}")
 
             # Use MinGW GCC compiler
-            # Force waf to only try g++ (skip MSVC) on Windows
-            ctx.env.CXX_COMPILER = ['g++']
-            ctx.env.CC = 'gcc'
-            ctx.env.CXX = 'g++'
-            ctx.env.AR = 'ar'
+            # Use ctx.find_program (like cross-compile does) instead of
+            # relying on compiler_cxx auto-detection which gets confused
+            # by MSVC environment variables (INCLUDE/LIB) on Windows
+            ctx.find_program('gcc', var='CC')
+            ctx.find_program('g++', var='CXX')
+            ctx.find_program('ar', var='AR')
+
+            # Clear MSVC environment variables that pollute g++ compilation
+            os.environ.pop('INCLUDE', None)
+            os.environ.pop('LIB', None)
+            if 'LIBPATH' in os.environ:
+                os.environ.pop('LIBPATH', None)
 
             # Statically link libgcc and libstdc++ to avoid DLL dependencies
             ctx.env.CXXFLAGS += ['-static-libgcc', '-static-libstdc++']
@@ -297,7 +304,10 @@ def configure(ctx):
         ctx.env.CXXFLAGS = ['-static-libgcc', '-static-libstdc++']
 
 
-    ctx.load('compiler_cxx compiler_c')
+    # Skip compiler_cxx auto-detection for native MSYS2/MinGW on Windows
+    # (compilers already found via ctx.find_program above)
+    if not (sys.platform == 'win32' and _is_mingw()):
+        ctx.load('compiler_cxx compiler_c')
 
     if ctx.env.STATIC_DEPENDENCIES \
         and (sys.platform.startswith('linux') or sys.platform == 'darwin') \
