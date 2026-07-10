@@ -230,6 +230,8 @@ def configure(ctx):
                     print(f"→ PKG_CONFIG_PATH set to {pkg_config_path}")
 
             # Use MinGW GCC compiler
+            # Force waf to only try g++ (skip MSVC) on Windows
+            ctx.env.CXX_COMPILER = ['g++']
             ctx.env.CC = 'gcc'
             ctx.env.CXX = 'g++'
             ctx.env.AR = 'ar'
