@@ -230,18 +230,23 @@ def configure(ctx):
                     print(f"→ PKG_CONFIG_PATH set to {pkg_config_path}")
 
             # Use MinGW GCC compiler
-            # Use ctx.find_program (like cross-compile does) instead of
-            # relying on compiler_cxx auto-detection which gets confused
-            # by MSVC environment variables (INCLUDE/LIB) on Windows
-            ctx.find_program('gcc', var='CC')
-            ctx.find_program('g++', var='CXX')
-            ctx.find_program('ar', var='AR')
+            # Force waf to use g++ via environment variables (checked first)
+            os.environ['CC'] = 'gcc'
+            os.environ['CXX'] = 'g++'
+            # Also set waf's check-cxx-compiler option to skip MSVC
+            ctx.options.check_cxx_compiler = 'g++'
+            ctx.options.check_c_compiler = 'gcc'
+            ctx.env.CXX_COMPILER = ['g++']
+            ctx.env.CC_COMPILER = ['gcc']
 
             # Clear MSVC environment variables that pollute g++ compilation
             os.environ.pop('INCLUDE', None)
             os.environ.pop('LIB', None)
-            if 'LIBPATH' in os.environ:
-                os.environ.pop('LIBPATH', None)
+            os.environ.pop('LIBPATH', None)
+
+            # MinGW needs _USE_MATH_DEFINES to expose M_PI, M_LN2 etc.
+            os.environ['_USE_MATH_DEFINES'] = '1'
+            ctx.env.DEFINES += ['_USE_MATH_DEFINES']
 
             # Statically link libgcc and libstdc++ to avoid DLL dependencies
             ctx.env.CXXFLAGS += ['-static-libgcc', '-static-libstdc++']
@@ -304,10 +309,7 @@ def configure(ctx):
         ctx.env.CXXFLAGS = ['-static-libgcc', '-static-libstdc++']
 
 
-    # Skip compiler_cxx auto-detection for native MSYS2/MinGW on Windows
-    # (compilers already found via ctx.find_program above)
-    if not (sys.platform == 'win32' and _is_mingw()):
-        ctx.load('compiler_cxx compiler_c')
+    ctx.load('compiler_cxx compiler_c')
 
     if ctx.env.STATIC_DEPENDENCIES \
         and (sys.platform.startswith('linux') or sys.platform == 'darwin') \

@@ -3,7 +3,6 @@
 from __future__ import print_function
 
 from waflib.TaskGen import feature, before_method
-import distutils.sysconfig
 import os
 import sys
 
