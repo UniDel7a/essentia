@@ -33,7 +33,7 @@ if 'VIRTUAL_ENV' in os.environ:
 
 def options(ctx):
     ctx.load('compiler_cxx compiler_c python')
-    if sys.platform == 'win32':
+    if sys.platform == 'win32' and 'MSYSTEM' not in os.environ:
         ctx.load('msvc')
 
     ctx.recurse('src')
@@ -130,11 +130,13 @@ def configure(ctx):
     # in gcc) instead of 387 floating point (used for 32-bit in gcc) to avoid
     # numerical differences between 32/64-bit builds
     # (see https://github.com/MTG/essentia/issues/179)
+    # Allow SSE on MSYS2/MinGW (native Windows GCC), skip on MSVC
+    is_msys2_mingw = sys.platform == 'win32' and 'MSYSTEM' in os.environ
     if (not ctx.options.EMSCRIPTEN and 
         not ctx.options.CROSS_COMPILE_ANDROID and 
         not ctx.options.CROSS_COMPILE_IOS and
         not ctx.options.NO_MSSE and
-        sys.platform != 'win32' and
+        (sys.platform != 'win32' or is_msys2_mingw) and
         any(arch in platform.machine() for arch in ['i386', 'i686', 'x86', 'x64'])):
         ctx.env.CXXFLAGS += ['-msse', '-msse2', '-mfpmath=sse']
 
@@ -206,43 +208,30 @@ def configure(ctx):
         ctx.env.LINKFLAGS += ['-pthread']
 
     elif sys.platform == 'win32':
-        print ("Building on win32")
+        if 'MSYSTEM' in os.environ:
+            # MSYS2 + MinGW environment (native Windows build without WSL)
+            msystem = os.environ.get('MSYSTEM', '')
+            mingw_prefix = os.environ.get('MINGW_PREFIX', '/mingw64')
+            print (f"→ Building on Windows with MSYS2/MSYSTEM={msystem} / {mingw_prefix}")
 
-        """
-        # compile libgcc and libstd statically when using MinGW
-        ctx.env.CXXFLAGS = ['-static-libgcc', '-static-libstdc++']
+            # Set PKG_CONFIG_PATH to MSYS2's pkgconfig directory
+            pkg_config_path = os.path.join(mingw_prefix, 'lib', 'pkgconfig')
+            if os.path.exists(pkg_config_path):
+                os.environ["PKG_CONFIG_PATH"] = pkg_config_path
+                print(f"→ PKG_CONFIG_PATH set to {pkg_config_path}")
 
-        win_path = "packaging/win32_3rdparty"
+            # Use MinGW GCC compiler from MSYS2
+            ctx.env.CC = 'gcc'
+            ctx.env.CXX = 'g++'
+            ctx.env.AR = 'ar'
 
-        # Establish MINGW locations
-        tdm_root = ctx.options.prefix
-        tdm_bin = tdm_root + "/bin"
-        tdm_include = tdm_root + "/include"
-        tdm_lib = tdm_root + "/lib"
+            # Statically link libgcc and libstdc++ to avoid DLL dependencies
+            ctx.env.CXXFLAGS += ['-static-libgcc', '-static-libstdc++']
 
-        # make pkgconfig find 3rdparty libraries in packaging/win32_3rdparty
-        # libs_3rdparty = ['yaml-0.1.5', 'fftw-3.3.3', 'libav-0.8.9', 'libsamplerate-0.1.8', 'chromaprint-1.4.2']
-        # libs_paths = [';packaging\win32_3rdparty\\' + lib + '\lib\pkgconfig' for lib in libs_3rdparty]
-        # os.environ["PKG_CONFIG_PATH"] = ';'.join(libs_paths)
-
-        os.environ["PKG_CONFIG_PATH"] = tdm_root + '\lib\pkgconfig'
-
-        # TODO why this code does not work?
-        # force the use of mingw gcc compiler instead of msvc
-        #ctx.env.CC = 'gcc'
-        #ctx.env.CXX = 'g++'
-        
-        import distutils.dir_util
-
-        print("copying pkgconfig ...")
-        distutils.dir_util.copy_tree(win_path + "/pkgconfig/bin", tdm_bin)
-
-        libs_3rdparty = ['yaml-0.1.5', 'fftw-3.3.3', 'libav-0.8.9', 'libsamplerate-0.1.8', 'taglib-1.9.1', 'chromaprint-1.4.2']
-        for lib in libs_3rdparty:
-            print("copying " + lib + "...")
-            distutils.dir_util.copy_tree(win_path + "/" + lib + "/include", tdm_include)
-            distutils.dir_util.copy_tree(win_path + "/" + lib + "/lib", tdm_lib)
-        """
+            # Enable SSE flags (MinGW GCC supports them on x86/x64)
+            ctx.env.CXXFLAGS += ['-msse', '-msse2', '-mfpmath=sse']
+        else:
+            print ("Building on win32 with MSVC")
 
     if ctx.options.CROSS_COMPILE_ANDROID:
         print ("→ Cross-compiling for Android ARM")
