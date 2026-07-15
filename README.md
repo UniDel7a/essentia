@@ -61,7 +61,7 @@ python -m pip install --upgrade pip setuptools wheel
 pip install ./essentia
 ```
 
-## Install (Automatic Installation Not Supported)
+## Install (Manually Build)
 
 ```bash
 # 1. Open mingw64 shell instead of MSYS2 shell,activate virtual environment
@@ -87,6 +87,8 @@ python waf
 # Tested on Windows 11 + MSYS2/MINGW64 + MinGW GCC 16.1.0 + CPython 3.11 (cp311-win_amd64)
 python waf install
 
+# 6. Copy dlls to the virtual environment
+python windows/resolve_dlls.py
 ```
 
 ---
