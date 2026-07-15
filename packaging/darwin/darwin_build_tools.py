@@ -103,7 +103,7 @@ def buildPackage(pkg_dir, essentia_root):
     target = os.environ['MACOSX_DEPLOYMENT_TARGET']
 
     # package name:
-    vfh = open(join(essentia_root_dir,'VERSION'), mode='r')
+    vfh = open(join(essentia_root_dir,'.essentia-version'), mode='r')
     essentia_version = vfh.read().strip()
     vfh.close()
     title = 'essentia_v' + essentia_version + '_osx' + target + '_i386_python' + python_version

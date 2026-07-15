@@ -152,7 +152,7 @@ def get_git_version():
 
 
 def get_version():
-    version = open('VERSION', 'r').read().strip('\n')
+    version = open('.essentia-version', 'r').read().strip('\n')
     if version.count('-dev'):
         # Development version. Get the number of commits after the last release
         git_version = get_git_version()

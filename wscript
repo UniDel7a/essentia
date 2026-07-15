@@ -21,7 +21,7 @@ def get_git_version():
 
 
 APPNAME = 'essentia'
-VERSION = open('VERSION', 'r').read().strip('\n')
+VERSION = open('.essentia-version', 'r').read().strip('\n')
 GIT_SHA = get_git_version()
 
 top = '.'
