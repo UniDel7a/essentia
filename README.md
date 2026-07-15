@@ -1,7 +1,7 @@
 # Essentia Unofficial Fork (Experimental)
 
 ---
-This fork is an **very experimental version** of Essentia that aims to provide a more user-friendly installation process, especially for *Windows* users. It includes simplified build instructions to help users get started quickly without the need for complex dependency management.
+This fork is an **experimental version** of Essentia that aims to provide a more user-friendly installation process, especially for *Windows* users. It includes simplified build instructions to help users get started quickly without the need for complex dependency management.
 
 Stable builds of Essentia for Linux can be found at the **official repository**.
 
