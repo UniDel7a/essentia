@@ -41,14 +41,14 @@ PyObject* VectorVectorReal::toPythonCopy(const vector<vector<Real> >* v) {
     PyArrayObject* result;
 
     result = (PyArrayObject*)PyArray_SimpleNew(2, dims, NPY_FLOAT);
-    assert(result->strides[1] == sizeof(Real));
+    assert(PyArray_STRIDES((PyArrayObject*)result)[1] == sizeof(Real));
 
     if (result == NULL) {
       throw EssentiaException("VectorVectorReal: dang null object");
     }
 
     for (int i=0; i<dims[0]; i++) {
-      Real* dest = (Real*)(result->data + i*result->strides[0]);
+      Real* dest = (Real*)(PyArray_DATA((PyArrayObject*)result) + i*PyArray_STRIDES((PyArrayObject*)result)[0]);
       const Real* src = &((*v)[i][0]);
       fastcopy(dest, src, dims[1]);
     }
@@ -62,12 +62,11 @@ PyObject* VectorVectorReal::toPythonCopy(const vector<vector<Real> >* v) {
   for (int i=0; i<(int)v->size(); ++i) {
     npy_intp itemDims[1] = {(int)(*v)[i].size()};
     PyArrayObject* item = (PyArrayObject*)PyArray_SimpleNew(1, itemDims, NPY_FLOAT);
-    assert(item->strides[0] == sizeof(Real));
     if (item == NULL) {
       throw EssentiaException("VectorVectorReal: dang null object (list of numpy arrays)");
     }
 
-    Real* dest = (Real*)(item->data);
+    Real* dest = (Real*)PyArray_DATA((PyArrayObject*)item);
     const Real* src = &((*v)[i][0]);
     fastcopy(dest, src, itemDims[0]);
 

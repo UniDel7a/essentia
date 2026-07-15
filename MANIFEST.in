@@ -6,7 +6,7 @@ include VERSION
 include waf
 include wscript src/wscript src/python/wscript
 recursive-include utils/ *.py
-recursive-include src/python/ essentia/**/*.py *.h *.cpp
+recursive-include src/python/ essentia/**/*.py *.h *.cpp *.yaml
 recursive-include src/algorithms *.h *.cpp
 recursive-include src/essentia *.h *.cpp
 recursive-include src/3rdparty *

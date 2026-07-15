@@ -41,14 +41,14 @@ PyObject* VectorVectorComplex::toPythonCopy(const vector<vector<complex<Real> > 
     PyArrayObject* result;
 
     result = (PyArrayObject*)PyArray_SimpleNew(2, dims, NPY_COMPLEX64);
-    assert(result->strides[1] == sizeof(complex<Real>));
+    assert(PyArray_STRIDES((PyArrayObject*)result)[1] == sizeof(complex<Real>));
 
     if (result == NULL) {
       throw EssentiaException("VectorVectorComplex: dang null object");
     }
 
     for (int i=0; i<dims[0]; i++) {
-      complex<Real>* dest = (complex<Real>*)(result->data + i*result->strides[0]);
+      complex<Real>* dest = (complex<Real>*)(PyArray_DATA((PyArrayObject*)result) + i*PyArray_STRIDES((PyArrayObject*)result)[0]);
       const complex<Real>* src = &((*v)[i][0]);
       fastcopy(dest, src, dims[1]);
     }

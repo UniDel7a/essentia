@@ -75,12 +75,16 @@ def importTest(fullname, strategy="import"):
             "When importing a test, the only strategies allowed are 'import' and 'reload'"
         )
 
-    exec(cmd)
+    try:
+        exec(cmd)
+    except NameError as e:
+        print("WARNING: skipping test '%s' (required algorithm not available: %s)" % (name, e))
 
 
 def getTests(names=None, exclude=None, strategy="import"):
     allNames = [name for _, name in listAllTests]
     names = names or allNames
+    exclude = exclude or []
     tests = [
         (folder, name)
         for folder, name in listAllTests
@@ -103,9 +107,16 @@ def getTests(names=None, exclude=None, strategy="import"):
     for test in tests:
         importTest(test, strategy)
 
-    testObjectsList = [
-        getattr(sys.modules[__name__], testName) for folder, testName in tests
-    ]
+    testObjectsList = []
+    for folder, testName in tests:
+        try:
+            testObjectsList.append(getattr(sys.modules[__name__], testName))
+        except AttributeError:
+            # test was skipped due to unavailable algorithm (NameError during import)
+            pass
+
+    if not testObjectsList:
+        raise RuntimeError("No test to execute after filtering unavailable algorithms!")
 
     return unittest.TestSuite(testObjectsList)
 

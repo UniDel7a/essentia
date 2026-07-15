@@ -33,8 +33,8 @@ PyObject* VectorStereoSample::toPythonCopy(const vector<StereoSample>* v) {
   if (!result) throw EssentiaException("VectorStereoSample::toPythonCopy: could not create PyArray");
 
   for (int i=0; i<int(dims[0]); ++i) {
-    Real* left = (Real*)(result->data + i*result->strides[0]);
-    Real* right = (Real*)(result->data + i*result->strides[0] + result->strides[1]);
+    Real* left = (Real*)(PyArray_DATA((PyArrayObject*)result) + i*PyArray_STRIDES((PyArrayObject*)result)[0]);
+    Real* right = (Real*)(PyArray_DATA((PyArrayObject*)result) + i*PyArray_STRIDES((PyArrayObject*)result)[0] + PyArray_STRIDES((PyArrayObject*)result)[1]);
     *left = (*v)[i].left();
     *right = (*v)[i].right();
   }
