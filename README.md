@@ -47,10 +47,11 @@ cd /path/to/essentia
 /path/to/.venv/Scripts/python waf
 
 # Python bindings filename should look like this:
-my_build_dir\src\python\_essentia.cp311-win_amd64.pyd
+# my_build_dir\src\python\_essentia.cp311-win_amd64.pyd
 
+# 5. Install
 # Tested on Windows 11 + MSYS2/MINGW64 + MinGW GCC 16.1.0 + CPython 3.11 (cp311-win_amd64)
-
+/path/to/.venv/Scripts/python waf install
 ```
 
 ---
