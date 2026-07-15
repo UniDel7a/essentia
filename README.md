@@ -5,7 +5,6 @@ This fork is an **very experimental version** of Essentia that aims to provide a
 
 Stable builds of Essentia for Linux can be found at the **official repository**.
 
-
 Please do not use this fork for production purposes, as it may contain bugs and is not guaranteed to be stable.
 
 ---
@@ -18,10 +17,11 @@ uv venv --python 3.11
 uv pip install "numpy==2.4.6"
 git clone https://github.com/UniDel7a/essentia.git
 scoop install main/msys2
-msys2 
+msys2 #initial installation
+exit #if msys is running, exit it and run mingw64 shell instead
 
 # 1. Install dependencies 
-## Use Mingw64 shell instead of MSYS2 shell, because the latter will cause some problems when compiling essentia
+# Use Mingw64 shell instead of MSYS2 shell, because the latter will cause some problems when compiling essentia
 
 mingw64 
 pacman -S mingw-w64-x86_64-toolchain
@@ -46,10 +46,10 @@ cd /path/to/essentia
 # 4. Build
 /path/to/.venv/Scripts/python waf
 
-## Python bindings filename should look like this:
+# Python bindings filename should look like this:
 my_build_dir\src\python\_essentia.cp311-win_amd64.pyd
 
-## Tested on Windows 11 + MSYS2/MINGW64 + MinGW GCC 16.1.0 + CPython 3.11 (cp311-win_amd64)
+# Tested on Windows 11 + MSYS2/MINGW64 + MinGW GCC 16.1.0 + CPython 3.11 (cp311-win_amd64)
 
 ```
 

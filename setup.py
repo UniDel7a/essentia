@@ -18,45 +18,80 @@ if var_project_name in os.environ:
     project_name = os.environ[var_project_name]
 
 
+def _is_mingw():
+    """Check if we are running in MSYS2/MinGW environment on Windows."""
+    if sys.platform != 'win32':
+        return False
+    if 'MSYSTEM' in os.environ:
+        return True
+    try:
+        result = subprocess.run(['g++', '-dumpmachine'],
+                                capture_output=True, text=True, timeout=5)
+        if 'mingw' in result.stdout.lower():
+            return True
+    except Exception:
+        pass
+    return False
+
+
 class EssentiaInstall(install_lib):
     def install(self):
         global library
         install_dir = os.path.join(self.install_dir, library.split(os.sep)[-1])
         res = shutil.move(library, install_dir)
-        os.system("ls -l %s" % self.install_dir)
+        if os.name != 'nt':
+            os.system("ls -l %s" % self.install_dir)
         return [install_dir]
 
 
 class EssentiaBuildExtension(build_ext):
     def run(self):
         global library
-        os.system('rm -rf tmp; mkdir tmp')
+        is_mingw = _is_mingw()
 
-        # Ugly hack using an enviroment variable... There's no way to pass a
-        # custom flag to python setup.py bdist_wheel
+        # Clean and create temp build directory
+        tmp_dir = 'tmp'
+        if os.path.isdir(tmp_dir):
+            shutil.rmtree(tmp_dir)
+        os.makedirs(tmp_dir)
+
+        # Env vars to control build
         var_skip_3rdparty = 'ESSENTIA_WHEEL_SKIP_3RDPARTY'
         var_only_python = 'ESSENTIA_WHEEL_ONLY_PYTHON'
 
+        # macOS ARM64 flags
         var_macos_arm64 = os.getenv('ESSENTIA_MACOSX_ARM64')
-        macos_arm64_flags = []
+        extra_flags = []
         if var_macos_arm64 == '1':
-            macos_arm64_flags = ['--arch=arm64', '--no-msse']
+            extra_flags = ['--arch=arm64', '--no-msse']
 
-        if var_skip_3rdparty in os.environ and os.environ[var_skip_3rdparty]=='1':
-            print('Skipping building static 3rdparty dependencies (%s=1)' %  var_skip_3rdparty)
+        # Build 3rdparty dependencies (Linux only)
+        if is_mingw:
+            print('Windows/MinGW detected: skipping 3rdparty static build')
+        elif var_skip_3rdparty in os.environ and os.environ[var_skip_3rdparty] == '1':
+            print('Skipping building static 3rdparty dependencies (%s=1)' % var_skip_3rdparty)
         else:
             subprocess.run('./packaging/build_3rdparty_static_debian.sh', check=True)
 
-        if var_only_python in os.environ and os.environ[var_only_python]=='1':
-            print('Skipping building the core libessentia library (%s=1)' %  var_only_python)
-            subprocess.run([PYTHON,  'waf', 'configure', '--only-python', '--static-dependencies',
-                      '--prefix=tmp'] + macos_arm64_flags, check=True)
+        # Build waf configure command
+        waf_configure = [PYTHON, 'waf', 'configure', '--prefix=' + tmp_dir]
+
+        if is_mingw:
+            print('Configuring for Windows/MinGW')
+            waf_configure += ['--build-static', '--with-python']
+            # Use shared DLLs from pacman on MinGW (no --static-dependencies)
+        elif var_only_python in os.environ and os.environ[var_only_python] == '1':
+            print('Skipping building the core libessentia library (%s=1)' % var_only_python)
+            waf_configure += ['--only-python', '--static-dependencies']
         else:
-            subprocess.run([PYTHON, 'waf', 'configure', '--build-static', '--static-dependencies',
-                      '--with-python', '--prefix=tmp'] + macos_arm64_flags, check=True)
+            waf_configure += ['--build-static', '--static-dependencies', '--with-python']
+
+        waf_configure += extra_flags
+        subprocess.run(waf_configure, check=True)
         subprocess.run([PYTHON, 'waf'], check=True)
         subprocess.run([PYTHON, 'waf', 'install'], check=True)
 
+        # Find installed library path
         library = glob.glob('tmp/lib/python*/*-packages/essentia')[0]
 
 
@@ -94,7 +129,7 @@ classifiers = [
     'Topic :: Multimedia :: Sound/Audio :: Sound Synthesis',
     'Operating System :: POSIX',
     'Operating System :: MacOS :: MacOS X',
-    #'Operating System :: Microsoft :: Windows',
+    'Operating System :: Microsoft :: Windows',
     'Programming Language :: C++',
     'Programming Language :: Python',
     'Programming Language :: Python :: 2',
