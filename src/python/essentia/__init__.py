@@ -1,5 +1,16 @@
-from . import _essentia
+import os as _os
 import sys as _sys
+
+# On Windows, ensure the package directory is in the DLL search path.
+# When DLLs are bundled by resolve_dlls.py, they sit next to _essentia.pyd,
+# so we just need to add that directory to the search path.
+if _sys.platform == 'win32':
+    _pkg_dir = _os.path.dirname(__file__)
+    if _os.path.isdir(_pkg_dir):
+        _os.add_dll_directory(_pkg_dir)
+        _os.environ['PATH'] = _pkg_dir + _os.pathsep + _os.environ.get('PATH', '')
+
+from . import _essentia
 from ._essentia import reset
 from .common import Pool, array, ones, zeros
 from .progress import Progress

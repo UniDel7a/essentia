@@ -9,21 +9,35 @@ Please do not use this fork for production purposes, as it may contain bugs and 
 
 ---
 
-```txt
-# 0.Prepare (scoop+git+uv+msys2) 
+## Pre-Setup
+
+```bash
+# 1.Prepare (git+scoop+msys2) 
+
+# Use Powershell
 
 cd path/to/project
-uv venv --python 3.11
-uv pip install "numpy==2.4.6"
+
+# uv is optional, you can use python -m venv .venv instead
+uv venv --python 3.11 # NOT TESTED WITH PYTHON 3.12 YET
+.venv/Scripts/python.exe -m ensurepip
+
 git clone https://github.com/UniDel7a/essentia.git
+
 scoop install main/msys2
-msys2 #initial installation
-exit #if msys is running, exit it and run mingw64 shell instead
 
-# 1. Install dependencies 
-# Use Mingw64 shell instead of MSYS2 shell, because the latter will cause some problems when compiling essentia
+# Run msys2 after setup (once)
+msys2 
 
+# If msys is running after setup, exit it and run mingw64 shell instead
+exit 
+
+# 2. Install dependencies 
+
+# Use mingw64 shell instead of MSYS2 shell, type mingw64 in the command line to open it
 mingw64 
+
+# Install dependencies using pacman
 pacman -S mingw-w64-x86_64-toolchain
 pacman -S mingw-w64-x86_64-pkgconf
 pacman -S mingw-w64-x86_64-eigen3
@@ -34,24 +48,45 @@ pacman -S mingw-w64-x86_64-libsamplerate
 pacman -S mingw-w64-x86_64-libyaml
 pacman -S mingw-w64-x86_64-chromaprint
 
-# 2. Enter project directory
+exit
+```
 
+## Install (Using pip)
+
+```bash
+cd path/to/project
 mingw64
+source .venv/Scripts/activate
+python -m pip install --upgrade pip setuptools wheel
+pip install ./essentia
+```
+
+## Install (Automatic Installation Not Supported)
+
+```bash
+# 1. Open mingw64 shell instead of MSYS2 shell,activate virtual environment
+cd path/to/project
+mingw64
+source .venv/Scripts/activate
+
+# 2. Enter project directory
 cd /path/to/essentia
 
 # 3. Configure
-
-/path/to/.venv/Scripts/python waf configure --build-static --with-examples --with-python -o my_build_dir
+# Use mingw64 shell instead of MSYS2 shell
+python waf configure --build-static --with-examples --with-python -o build_dir --prefix=../.venv
 
 # 4. Build
-/path/to/.venv/Scripts/python waf
+# Use mingw64 shell instead of MSYS2 shell
+python waf
 
 # Python bindings filename should look like this:
-# my_build_dir\src\python\_essentia.cp311-win_amd64.pyd
+# build_dir\src\python\_essentia.cp311-win_amd64.pyd
 
 # 5. Install
 # Tested on Windows 11 + MSYS2/MINGW64 + MinGW GCC 16.1.0 + CPython 3.11 (cp311-win_amd64)
-/path/to/.venv/Scripts/python waf install
+python waf install
+
 ```
 
 ---

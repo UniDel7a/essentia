@@ -37,6 +37,12 @@ def _is_mingw():
 class EssentiaInstall(install_lib):
     def install(self):
         global library
+        # If already installed to site-packages (MinGW), skip the move
+        if library and os.path.dirname(library) == self.install_dir:
+            print('  Already installed to %s, skipping move' % self.install_dir)
+            if os.name != 'nt':
+                os.system("ls -l %s" % self.install_dir)
+            return [library]
         install_dir = os.path.join(self.install_dir, library.split(os.sep)[-1])
         res = shutil.move(library, install_dir)
         if os.name != 'nt':
@@ -92,7 +98,37 @@ class EssentiaBuildExtension(build_ext):
         subprocess.run([PYTHON, 'waf', 'install'], check=True)
 
         # Find installed library path
-        library = glob.glob('tmp/lib/python*/*-packages/essentia')[0]
+        if is_mingw:
+            # On MinGW, waf install puts .pyd/.py directly in PYTHONDIR
+            cache_file = os.path.join('build', 'c4che', '_cache.py')
+            pythondir = None
+            if os.path.isfile(cache_file):
+                with open(cache_file) as f:
+                    for line in f:
+                        if line.startswith('PYTHONDIR'):
+                            pythondir = line.split('=', 1)[1].strip().strip("'\"")
+                            break
+            if pythondir:
+                pkg = os.path.join(pythondir, 'essentia')
+                if os.path.isdir(pkg):
+                    library = pkg
+            # Resolve DLL dependencies on Windows
+            resolve_script = os.path.join(os.path.dirname(__file__),
+                                          'windows', 'resolve_dlls.py')
+            if os.path.isfile(resolve_script):
+                print('Resolving DLL dependencies...')
+                subprocess.run([PYTHON, resolve_script], check=True)
+        if library is None:
+            results = glob.glob('tmp/lib/python*/*-packages/essentia')
+            if results:
+                library = results[0]
+            else:
+                # Last resort: files may already be installed directly
+                for p in sys.path:
+                    candidate = os.path.join(p, 'essentia', '__init__.py')
+                    if os.path.isfile(candidate):
+                        library = os.path.dirname(candidate)
+                        break
 
 
 def get_git_version():
@@ -112,10 +148,13 @@ def get_version():
         # Development version. Get the number of commits after the last release
         git_version = get_git_version()
         print('git describe:', git_version)
-        dev_commits = git_version.split('-')[-2] if git_version else ''
-        if not dev_commits.isdigit():
-            print('Error parsing the number of dev commits: %s', dev_commits)
-            dev_commits = '0'
+        dev_commits = '0'
+        if git_version:
+            parts = git_version.split('-')
+            if len(parts) >= 2 and parts[-2].isdigit():
+                dev_commits = parts[-2]
+            else:
+                print('Warning: could not parse dev commits from "%s", using 0' % git_version)
         version += dev_commits
     return version
 
