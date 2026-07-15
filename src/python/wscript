@@ -28,10 +28,9 @@ def configure(ctx):
     # outputs this flag.
     # https://www.python.org/dev/peps/pep-0513
     # https://github.com/pypa/manylinux/issues/85
-    # On Windows (MSYS2/MinGW), Python 2 had MinGW-compatible import libs,
-    # but Python 3 does not — the extension resolves symbols from the DLL
-    # at runtime, so we strip -lpython on all platforms.
-    if sys.platform != 'win32' or not os.environ.get('MSYSTEM') or int(ctx.env.PYTHON_VERSION[0]) == 3:
+    # On Windows (MSYS2/MinGW), we must keep the Python library for linking.
+    # MinGW GCC can link against MSVC .lib import libs via auto-import.
+    if sys.platform != 'win32' or not os.environ.get('MSYSTEM'):
         ctx.env.LIB_PYEMBED = [f for f in ctx.env.LIB_PYEMBED
                                        if not f.startswith('python')]
         ctx.env.LIB_PYEXT = [f for f in ctx.env.LIB_PYEMBED
