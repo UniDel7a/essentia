@@ -1,14 +1,19 @@
-# Essentia Unofficial Fork (Experimental)
+# Essentia Unofficial Fork for Windows (Experimental)
 
 This fork is an **experimental version** of Essentia that aims to provide a more user-friendly installation process, especially for *Windows* users. It includes simplified build instructions to help users get started quickly without the need for complex dependency management.
 
 Stable builds of Essentia for Linux can be found at the **official repository**.
 
 Please do not use this fork for production purposes, as it may contain bugs and is not guaranteed to be stable.
+
 Please do not submit issues to the *official* Essentia repository regarding this fork, as it is not maintained by the original developers.
+
 Please do not expect pull requests or further development, as it is not officially supported by the Essentia team.
 
 Tested on Windows 11 + MSYS2/MINGW64 + MinGW GCC 16.1.0 + CPython 3.11 (cp311-win_amd64)
+
+---
+
 
 ---
 
@@ -74,7 +79,7 @@ pip install ./essentia
 
 ```
 
-## Install (Manually Build)
+## Install (Build Manually)
 
 ```bash
 # 1. Open mingw64 shell instead of MSYS2 shell,activate virtual environment

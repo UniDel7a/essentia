@@ -198,8 +198,65 @@ def _call_sig(inputs, outputs):
     return ", ".join(args), return_type
 
 
+def _generate_essentia_stubs():
+    """Generate __init__.pyi for the top-level essentia package."""
+    return """\"\"\"
+Type stubs for the essentia top-level package.
+\"\"\"
+
+from typing import Any, Tuple
+from essentia._essentia import Algorithm, StreamingAlgorithm, reset
+from essentia.common import Pool
+
+class EssentiaError(Exception):
+    error: str
+    filename: str | None
+    def __init__(self, error, filename=None) -> None: ...
+
+class DebuggingModule:
+    EAlgorithm: int = 1
+    EConnectors: int = 2
+    EFactory: int = 4
+    ENetwork: int = 8
+    EGraph: int = 16
+    EExecution: int = 32
+    EMemory: int = 64
+    EScheduler: int = 128
+    EPython: int = 1048576
+    EPyBindings: int = 2097152
+
+def reset() -> None: ...
+"""
+
+
+def _generate_essentia_compiled_stubs():
+    """Generate _essentia.pyi for the essentia._essentia compiled module."""
+    return """\"\"\"
+Type stubs for essentia._essentia (C++ extension).
+\"\"\"
+
+from typing import Any
+import numpy as np
+import numpy.typing as npt
+
+class Algorithm:
+    name: str
+    def __init__(self, name: str) -> None: ...
+
+class StreamingAlgorithm:
+    name: str
+    def __init__(self, name: str) -> None: ...
+
+def version() -> str: ...
+def version_git_sha() -> str: ...
+def keys() -> list[str]: ...
+def info(name: str) -> dict[str, Any]: ...
+def reset() -> None: ...
+"""
+
+
 def _generate_std_stubs(algos, sorted_names):
-    """Generate the __init__.pyi content for standard algorithms."""
+    """Generate standard.pyi content for essentia.standard."""
     lines = [
         '"""',
         "Type stubs for essentia.standard algorithms.",
@@ -377,14 +434,25 @@ def generate_stubs(stubs_dir):
     print("")
     print("Generating stub files...")
 
+    # __init__.py (package marker)
     py_path = os.path.join(stubs_dir, "__init__.py")
     with open(py_path, "w", encoding="utf-8") as f:
         f.write('"""PEP 561 type stub package for essentia."""\n')
     print("  -> {}".format(py_path))
 
-    content = _generate_std_stubs(std_data, std_names)
+    # __init__.pyi (top-level essentia)
+    content = _generate_essentia_stubs()
     _write_stub(os.path.join(stubs_dir, "__init__.pyi"), content)
 
+    # _essentia.pyi (compiled C++ extension)
+    content = _generate_essentia_compiled_stubs()
+    _write_stub(os.path.join(stubs_dir, "_essentia.pyi"), content)
+
+    # standard.pyi (essentia.standard)
+    content = _generate_std_stubs(std_data, std_names)
+    _write_stub(os.path.join(stubs_dir, "standard.pyi"), content)
+
+    # streaming.pyi (essentia.streaming)
     content = _generate_streaming_stubs(st_data, st_names)
     _write_stub(os.path.join(stubs_dir, "streaming.pyi"), content)
 
