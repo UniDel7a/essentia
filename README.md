@@ -1,5 +1,57 @@
-Essentia
-========
+# Essentia Unofficial Fork (Experimental)
+
+---
+This fork is an **very experimental version** of Essentia that aims to provide a more user-friendly installation process, especially for *Windows* users. It includes simplified build instructions to help users get started quickly without the need for complex dependency management.
+
+Stable builds of Essentia for Linux can be found at the **official repository**.
+
+
+Please do not use this fork for production purposes, as it may contain bugs and is not guaranteed to be stable.
+
+---
+
+```txt
+# 0.Prepare (scoop+git+uv+msys2) 
+
+cd path/to/project
+uv venv --python 3.11
+uv pip install "numpy==2.4.6"
+git clone https://github.com/UniDel7a/essentia.git
+scoop install main/msys2
+msys2 
+
+# 1. Install dependencies 
+## Use Mingw64 shell instead of MSYS2 shell, because the latter will cause some problems when compiling essentia
+
+mingw64 
+pacman -S mingw-w64-x86_64-toolchain
+pacman -S mingw-w64-x86_64-pkgconf
+pacman -S mingw-w64-x86_64-eigen3
+pacman -S mingw-w64-x86_64-fftw
+pacman -S mingw-w64-x86_64-ffmpeg
+pacman -S mingw-w64-x86_64-taglib
+pacman -S mingw-w64-x86_64-libsamplerate
+pacman -S mingw-w64-x86_64-libyaml
+pacman -S mingw-w64-x86_64-chromaprint
+
+# 2. Enter project directory
+
+mingw64
+cd /path/to/essentia
+
+# 3. Configure
+
+/path/to/.venv/Scripts/python waf configure --build-static --with-examples --with-python -o my_build_dir
+
+# 4. Build
+/path/to/.venv/Scripts/python waf
+
+python bindings filename should look like this:
+my_build_dir\src\python\_essentia.cp311-win_amd64.pyd
+```
+
+---
+
 [![Build wheels status](https://github.com/MTG/essentia/actions/workflows/build-wheels-cibuildwheel.yml/badge.svg)](https://github.com/MTG/essentia/actions/workflows/build-wheels-cibuildwheel.yml)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![PyPI downloads: essentia](https://img.shields.io/pypi/dm/essentia.svg?label=PyPI%20downloads:%20essentia)](https://pypi.org/project/essentia/)

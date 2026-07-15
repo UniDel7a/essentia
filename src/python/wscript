@@ -3,8 +3,9 @@
 
 from __future__ import print_function
 
-import distutils.sysconfig
+import sysconfig
 import os
+import sys
 
 
 def options(ctx):
@@ -27,10 +28,12 @@ def configure(ctx):
     # outputs this flag.
     # https://www.python.org/dev/peps/pep-0513
     # https://github.com/pypa/manylinux/issues/85
-    ctx.env.LIB_PYEMBED = [f for f in ctx.env.LIB_PYEMBED
-                                   if not f.startswith('python')]
-    ctx.env.LIB_PYEXT = [f for f in ctx.env.LIB_PYEMBED
-                                   if not f.startswith('python')]
+    # On Windows (MSYS2/MinGW), we must keep the Python library for linking
+    if sys.platform != 'win32' or not os.environ.get('MSYSTEM'):
+        ctx.env.LIB_PYEMBED = [f for f in ctx.env.LIB_PYEMBED
+                                       if not f.startswith('python')]
+        ctx.env.LIB_PYEXT = [f for f in ctx.env.LIB_PYEMBED
+                                       if not f.startswith('python')]
 
 def adjust(objs, path):
     return [ '%s/%s' % (path, obj) for obj in objs ]
@@ -39,7 +42,7 @@ def build(ctx):
     print('→ building from ' + ctx.path.abspath())
 
     # gets the path from the active virtualenv
-    PYLIB = distutils.sysconfig.get_python_lib()
+    PYLIB = sysconfig.get_path('platlib')
 
     NUMPY_INCPATH = [ # importable numpy path
                       __import__('numpy').get_include(),
