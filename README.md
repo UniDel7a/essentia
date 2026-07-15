@@ -1,15 +1,18 @@
 # Essentia Unofficial Fork (Experimental)
 
----
 This fork is an **experimental version** of Essentia that aims to provide a more user-friendly installation process, especially for *Windows* users. It includes simplified build instructions to help users get started quickly without the need for complex dependency management.
 
 Stable builds of Essentia for Linux can be found at the **official repository**.
 
 Please do not use this fork for production purposes, as it may contain bugs and is not guaranteed to be stable.
+Please do not submit issues to the *official* Essentia repository regarding this fork, as it is not maintained by the original developers.
+Please do not expect pull requests or further development, as it is not officially supported by the Essentia team.
+
+Tested on Windows 11 + MSYS2/MINGW64 + MinGW GCC 16.1.0 + CPython 3.11 (cp311-win_amd64)
 
 ---
 
-## Pre-Setup
+## Before Setup
 
 ```bash
 # 1.Prepare (git+scoop+msys2) 
@@ -24,12 +27,15 @@ uv venv --python 3.11 # NOT TESTED WITH PYTHON 3.12 YET
 
 git clone https://github.com/UniDel7a/essentia.git
 
+# PLEASE install scoop to somewhere else rather than on disk C 
+# configure scoop to use the main bucket
+scoop bucket add main
 scoop install main/msys2
 
 # Run msys2 after setup (once)
 msys2 
 
-# If msys is running after setup, exit it and run mingw64 shell instead
+# If msys is still running after initial setup, exit it and run mingw64 shell instead
 exit 
 
 # 2. Install dependencies 
@@ -37,7 +43,7 @@ exit
 # Use mingw64 shell instead of MSYS2 shell, type mingw64 in the command line to open it
 mingw64 
 
-# Install dependencies using pacman
+# Install dependencies using pacman (once)
 pacman -S mingw-w64-x86_64-toolchain
 pacman -S mingw-w64-x86_64-pkgconf
 pacman -S mingw-w64-x86_64-eigen3
@@ -54,11 +60,18 @@ exit
 ## Install (Using pip)
 
 ```bash
+# 1. Open mingw64 shell instead of MSYS2 shell,activate virtual environment
 cd path/to/project
 mingw64
-source .venv/Scripts/activate
+
+# 2. Activate the virtual environment
+source .venv/Scripts/activate 
+
+# 3. Install essentia using pip
+python -m ensurepip
 python -m pip install --upgrade pip setuptools wheel
 pip install ./essentia
+
 ```
 
 ## Install (Manually Build)
@@ -76,19 +89,20 @@ cd /path/to/essentia
 # Use mingw64 shell instead of MSYS2 shell
 python waf configure --build-static --with-examples --with-python -o build_dir --prefix=../.venv
 
-# 4. Build
-# Use mingw64 shell instead of MSYS2 shell
-python waf
-
-# Python bindings filename should look like this:
+# 4. Install
+python waf install
+# Python bindings filename may look like:
 # build_dir\src\python\_essentia.cp311-win_amd64.pyd
 
-# 5. Install
-# Tested on Windows 11 + MSYS2/MINGW64 + MinGW GCC 16.1.0 + CPython 3.11 (cp311-win_amd64)
-python waf install
-
-# 6. Copy dlls to the virtual environment
+# 5. Copy dlls to the virtual environment
 python windows/resolve_dlls.py
+
+# 7. Generate type stubs
+python windows/generate_stubs.py
+
+# 8. Test installation
+python -c "import essentia; print(essentia.__version__)"
+
 ```
 
 ---

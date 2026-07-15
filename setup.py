@@ -118,6 +118,15 @@ class EssentiaBuildExtension(build_ext):
             if os.path.isfile(resolve_script):
                 print('Resolving DLL dependencies...')
                 subprocess.run([PYTHON, resolve_script], check=True)
+            # Install pre-generated .pyi type stubs (PEP 561)
+            stubs_out = os.path.join(os.path.dirname(__file__),
+                                     'essentia-stubs')
+            if os.path.isdir(stubs_out) and pythondir:
+                stubs_dest = os.path.join(pythondir, 'essentia-stubs')
+                if os.path.isdir(stubs_dest):
+                    shutil.rmtree(stubs_dest)
+                shutil.copytree(stubs_out, stubs_dest)
+                print(f'  -> Installed stubs to {stubs_dest}')
         if library is None:
             results = glob.glob('tmp/lib/python*/*-packages/essentia')
             if results:

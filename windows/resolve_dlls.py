@@ -11,7 +11,6 @@ that ``import essentia`` works without adding MinGW to PATH.
 
 Usage:
     python windows/resolve_dlls.py          # from the essentia repo root
-    python resolve_dlls.py                  # if cwd is already the repo root
 """
 
 import os
