@@ -151,9 +151,12 @@ mingw64
 source .venv/Scripts/activate 
 
 # 3. Install essentia using pip
-python -m ensurepip
-python -m pip install --upgrade pip setuptools wheel
-pip install ./essentia
+#    IMPORTANT: Use .venv/Scripts/python -m pip, NOT "pip" directly.
+#    In the MINGW64 shell, "pip" may still resolve to the system Python
+#    even after source activate, causing a Python version mismatch.
+.venv/Scripts/python -m ensurepip
+.venv/Scripts/python -m pip install --upgrade pip setuptools wheel
+.venv/Scripts/python -m pip install ./essentia
 
 ```
 
