@@ -105,7 +105,7 @@ This fork modifies the upstream essentia codebase to enable native Windows build
 cd path/to/project
 
 # uv is optional, you can use python -m venv .venv instead
-uv venv --python 3.11 # NOT TESTED WITH PYTHON 3.12 YET
+uv venv --python 3.11 # >=3.11,<3.15
 .venv/Scripts/python.exe -m ensurepip
 
 git clone https://github.com/UniDel7a/essentia.git
